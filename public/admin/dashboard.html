@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - Sweet Shop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .login-container { max-width: 400px; margin: 100px auto; }
+        .dashboard-container { display: none; }
+    </style>
+</head>
+<body>
+    <!-- Login Form -->
+    <div class="login-container" id="loginForm">
+        <div class="card">
+            <div class="card-header bg-primary text-white text-center">
+                <h4><i class="fas fa-user-cog"></i> تسجيل الدخول</h4>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">اسم المستخدم</label>
+                    <input type="text" class="form-control" id="username" value="admin">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">كلمة المرور</label>
+                    <input type="password" class="form-control" id="password" value="admin123">
+                </div>
+                <button onclick="login()" class="btn btn-primary w-100">دخول</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="dashboard-container" id="dashboard">
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Sidebar -->
+                <div class="col-md-3 col-lg-2 sidebar p-0">
+                    <div class="p-3 text-center border-bottom">
+                        <h5>🍰 لوحة التحكم</h5>
+                    </div>
+                    <a href="#" onclick="showSection('dashboard')" class="active"><i class="fas fa-home"></i> الرئيسية</a>
+                    <a href="#" onclick="showSection('orders')"><i class="fas fa-shopping-cart"></i> الطلبات</a>
+                    <a href="#" onclick="showSection('products')"><i class="fas fa-box"></i> المنتجات</a>
+                    <a href="#" onclick="showSection('customers')"><i class="fas fa-users"></i> العملاء</a>
+                    <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> خروج</a>
+                </div>
+                
+                <!-- Main Content -->
+                <div class="col-md-9 col-lg-10 p-4">
+                    <!-- Stats -->
+                    <div class="row g-4 mb-4" id="statsSection">
+                        <div class="col-md-3">
+                            <div class="stat-card pink">
+                                <div class="stat-number" id="statCustomers">0</div>
+                                <div>العملاء</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card purple">
+                                <div class="stat-number" id="statOrders">0</div>
+                                <div>إجمالي الطلبات</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card orange">
+                                <div class="stat-number" id="statPending">0</div>
+                                <div>طلبات معلقة</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card green">
+                                <div class="stat-number" id="statRevenue">0</div>
+                                <div>الإيرادات</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Orders Section -->
+                    <div id="ordersSection" style="display:none;">
+                        <div class="d-flex justify-content-between mb-3">
+                            <h4>الطلبات</h4>
+                            <select class="form-select w-auto" id="orderStatusFilter" onchange="loadOrders()">
+                                <option value="">كل الحالات</option>
+                                <option value="pending">معلق</option>
+                                <option value="confirmed">مؤكد</option>
+                                <option value="preparing">قيد التحضير</option>
+                                <option value="delivered">تم التسليم</option>
+                                <option value="cancelled">ملغى</option>
+                            </select>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>رقم</th>
+                                        <th>العميل</th>
+                                        <th>النوع</th>
+                                        <th>السعر</th>
+                                        <th>التاريخ</th>
+                                        <th>الحالة</th>
+                                        <th>إجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ordersTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Products Section -->
+                    <div id="productsSection" style="display:none;">
+                        <div class="d-flex justify-content-between mb-3">
+                            <h4>المنتجات</h4>
+                            <button class="btn btn-primary" onclick="showAddProduct()">
+                                <i class="fas fa-plus"></i> إضافة منتج
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>رقم</th>
+                                        <th>الاسم</th>
+                                        <th>الفئة</th>
+                                        <th>السعر</th>
+                                        <th>الحالة</th>
+                                        <th>إجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="productsTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Customers Section -->
+                    <div id="customersSection" style="display:none;">
+                        <h4 class="mb-3">العملاء</h4>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>رقم</th>
+                                        <th>الاسم</th>
+                                        <th>البريد</th>
+                                        <th>الهاتف</th>
+                                        <th>تاريخ التسجيل</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="customersTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let token = localStorage.getItem('adminToken');
+        
+        if (token) {
+            showDashboard();
+        }
+        
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const res = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok) {
+                    token = data.token;
+                    localStorage.setItem('adminToken', token);
+                    showDashboard();
+                } else {
+                    alert('خطأ في تسجيل الدخول');
+                }
+            } catch (err) {
+                alert('خطأ في الاتصال بالخادم');
+            }
+        }
+        
+        function showDashboard() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            loadStats();
+        }
+        
+        async function loadStats() {
+            const res = await fetch('/api/admin/stats', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            
+            if (res.ok) {
+                const stats = await res.json();
+                document.getElementById('statCustomers').textContent = stats.customers;
+                document.getElementById('statOrders').textContent = stats.totalOrders;
+                document.getElementById('statPending').textContent = stats.pendingOrders;
+                document.getElementById('statRevenue').textContent = stats.totalRevenue + ' ر.س';
+            }
+        }
+        
+        function showSection(section) {
+            document.getElementById('statsSection').style.display = 'none';
+            document.getElementById('ordersSection').style.display = 'none';
+            document.getElementById('productsSection').style.display = 'none';
+            document.getElementById('customersSection').style.display = 'none';
+            
+            if (section === 'dashboard') {
+                document.getElementById('statsSection').style.display = 'flex';
+                loadStats();
+            } else if (section === 'orders') {
+                document.getElementById('ordersSection').style.display = 'block';
+                loadOrders();
+            } else if (section === 'products') {
+                document.getElementById('productsSection').style.display = 'block';
+                loadProducts();
+            } else if (section === 'customers') {
+                document.getElementById('customersSection').style.display = 'block';
+                loadCustomers();
+            }
+        }
+        
+        async function loadOrders() {
+            const status = document.getElementById('orderStatusFilter').value;
+            const url = status ? `/api/admin/orders?status=${status}` : '/api/admin/orders';
+            
+            const res = await fetch(url, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            
+            const orders = await res.json();
+            
+            document.getElementById('ordersTable').innerHTML = orders.map(o => `
+                <tr>
+                    <td>${o.id}</td>
+                    <td>${o.customer_name || 'زائر'}</td>
+                    <td>${getOrderTypeName(o.order_type)}</td>
+                    <td>${o.total_price} ر.س</td>
+                    <td>${new Date(o.created_at).toLocaleDateString('ar')}</td>
+                    <td><span class="badge badge-${o.status}">${getStatusName(o.status)}</span></td>
+                    <td>
+                        <select class="form-select form-select-sm" onchange="updateOrderStatus(${o.id}, this.value)" style="width:auto;">
+                            <option value="pending" ${o.status === 'pending' ? 'selected' : ''}>معلق</option>
+                            <option value="confirmed" ${o.status === 'confirmed' ? 'selected' : ''}>مؤكد</option>
+                            <option value="preparing" ${o.status === 'preparing' ? 'selected' : ''}>قيد التحضير</option>
+                            <option value="delivered" ${o.status === 'delivered' ? 'selected' : ''}>تم التسليم</option>
+                            <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>ملغى</option>
+                        </select>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        async function updateOrderStatus(id, status) {
+            await fetch(`/api/admin/orders/${id}/status`, {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token 
+                },
+                body: JSON.stringify({ status })
+            });
+            loadOrders();
+            loadStats();
+        }
+        
+        async function loadProducts() {
+            const res = await fetch('/api/admin/products', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            
+            const products = await res.json();
+            
+            document.getElementById('productsTable').innerHTML = products.map(p => `
+                <tr>
+                    <td>${p.id}</td>
+                    <td>${p.name}</td>
+                    <td>${getOrderTypeName(p.category)}</td>
+                    <td>${p.price} ر.س</td>
+                    <td><span class="badge bg-${p.available ? 'success' : 'danger'}">${p.available ? 'متوفر' : 'غير متوفر'}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="deleteProduct(${p.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        async function deleteProduct(id) {
+            if (!confirm('هل أنت متأكد؟')) return;
+            
+            await fetch(`/api/admin/products/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            loadProducts();
+        }
+        
+        async function loadCustomers() {
+            const res = await fetch('/api/admin/customers', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            
+            const customers = await res.json();
+            
+            document.getElementById('customersTable').innerHTML = customers.map(c => `
+                <tr>
+                    <td>${c.id}</td>
+                    <td>${c.name}</td>
+                    <td>${c.email || '-'}</td>
+                    <td>${c.phone}</td>
+                    <td>${new Date(c.created_at).toLocaleDateString('ar')}</td>
+                </tr>
+            `).join('');
+        }
+        
+        function getOrderTypeName(type) {
+            const names = { cake: 'كيك', buffet: 'بوفيه', sweets: 'حلويات' };
+            return names[type] || type;
+        }
+        
+        function getStatusName(status) {
+            const names = { 
+                pending: 'معلق', confirmed: 'مؤكد', 
+                preparing: 'قيد التحضر', delivered: 'تم التسليم', cancelled: 'ملغى' 
+            };
+            return names[status] || status;
+        }
+        
+        function logout() {
+            localStorage.removeItem('adminToken');
+            location.reload();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>طلب كيك - Sweet Shop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-birthday-cake"></i> محل الحلويات
+            </a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">الرئيسية</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/order-cake">كيك</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/order-buffet">بوفيه</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/order-sweets">حلويات</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <h2 class="text-center mb-5">🎂 اطلب كيكك المفضل</h2>
+        
+        <div class="row">
+            <!-- Products List -->
+            <div class="col-lg-8">
+                <div class="row g-4" id="cakeProducts">
+                    <!-- Products loaded dynamically -->
+                </div>
+            </div>
+            
+            <!-- Order Form -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-shopping-cart"></i> تفاصيل الطلب</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="orderForm">
+                            <input type="hidden" id="selectedProduct" value="">
+                            
+                            <div class="mb-3">
+                                <label class="form-label">الاسم الكامل</label>
+                                <input type="text" class="form-control" id="customerName" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">رقم الهاتف</label>
+                                <input type="tel" class="form-control" id="customerPhone" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">العنوان</label>
+                                <textarea class="form-control" id="customerAddress" rows="2" required></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">تاريخ التسليم</label>
+                                <input type="date" class="form-control" id="deliveryDate" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">الكمية</label>
+                                <input type="number" class="form-control" id="quantity" value="1" min="1" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">ملاحظات خاصة</label>
+                                <textarea class="form-control" id="notes" rows="2" placeholder="اكتب أي ملاحظات خاصة..."></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">السعر الإجمالي</label>
+                                <input type="text" class="form-control" id="totalPrice" readonly>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-check"></i> تأكيد الطلب
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let selectedPrice = 0;
+        
+        // Load cake products
+        fetch('/api/products?category=cake')
+            .then(res => res.json())
+            .then(products => {
+                const container = document.getElementById('cakeProducts');
+                container.innerHTML = products.map(p => `
+                    <div class="col-md-6">
+                        <div class="card h-100 product-card" style="cursor:pointer" onclick="selectProduct(${p.id}, '${p.name}', ${p.price})">
+                            <div class="bg-light d-flex align-items-center justify-content-center" style="height:150px;">
+                                <i class="fas fa-birthday-cake text-muted" style="font-size:3rem;"></i>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">${p.name}</h5>
+                                <p class="card-text text-muted">${p.description}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="product-price">${p.price} ر.س</span>
+                                    <span class="badge bg-success">متوفر</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            });
+        
+        function selectProduct(id, name, price) {
+            document.getElementById('selectedProduct').value = id;
+            selectedPrice = price;
+            updateTotal();
+            
+            // Highlight selected
+            document.querySelectorAll('.product-card').forEach(card => card.classList.remove('border-primary'));
+            event.currentTarget.classList.add('border-primary');
+        }
+        
+        function updateTotal() {
+            const qty = parseInt(document.getElementById('quantity').value) || 1;
+            document.getElementById('totalPrice').value = (selectedPrice * qty) + ' ر.س';
+        }
+        
+        document.getElementById('quantity').addEventListener('input', updateTotal);
+        
+        // Submit order
+        document.getElementById('orderForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const productId = document.getElementById('selectedProduct').value;
+            if (!productId) {
+                alert('الرجاء اختيار منتج');
+                return;
+            }
+            
+            const order = {
+                customer_name: document.getElementById('customerName').value,
+                customer_phone: document.getElementById('customerPhone').value,
+                customer_address: document.getElementById('customerAddress').value,
+                order_type: 'cake',
+                product_id: productId,
+                quantity: parseInt(document.getElementById('quantity').value),
+                total_price: selectedPrice * parseInt(document.getElementById('quantity').value),
+                delivery_date: document.getElementById('deliveryDate').value,
+                notes: document.getElementById('notes').value
+            };
+            
+            try {
+                const res = await fetch('/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(order)
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok) {
+                    alert('✅ تم تقديم طلبك بنجاح! رقم الطلب: ' + data.orderId);
+                    window.location.href = '/';
+                } else {
+                    alert('حدث خطأ: ' + data.error);
+                }
+            } catch (err) {
+                alert('حدث خطأ في الاتصال بالخادم');
+            }
+        });
+    </script>
+</body>
+</html>
